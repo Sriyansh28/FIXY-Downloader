@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>F-I-X-Y Downloader</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif, sans-serif;
+            text-align: center;
+            padding-top: 50px;
+            background-color: #fcfbfb;
+        }
+        input {
+            padding: 10px;
+            width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-left: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 F-I-X-Y Downloader</h1>
+
+    <input type="text" id="url" placeholder="Enter video link here..." required>
+    <button id="downloadBtn" onclick="startDownload()">Download</button>
+
+    <p id="status"></p>
+
+    <script>
+        async function startDownload() {
+            const url = document.getElementById('url').value.trim();
+            const status = document.getElementById('status');
+            const button = document.getElementById('downloadBtn');
+
+            if (!url) {
+                status.innerText = "❌ Paste the video URL";
+                return;
+            }
+
+            button.disabled = true;
+            button.innerText = "⏬ Downloading...";
+            status.innerText = "🔄 Video is downloading, please wait...";
+
+            try {
+                const response = await fetch("/api/download", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    status.innerText = `❌ ${data.error}`;
+                    button.disabled = false;
+                    button.innerText = "Download";
+                    return;
+                }
+
+                const filename = data.filename;
+                status.innerText = `✅ Ready for Download..: ${filename}`;
+
+                const link = document.createElement("a");
+                link.href = `/api/file/${encodeURIComponent(filename)}`;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                status.innerHTML = `✅ Ready to download: ${filename}<br><i>Video is downloaded. Please check your downloads section.</i>`;
+            } catch (error) {
+                status.innerText = `❌ Error: ${error.message}`;
+            } finally {
+                button.disabled = false;
+                button.innerText = "Download";
+            }
+        }
+    </script>
+</body>
+</html>
